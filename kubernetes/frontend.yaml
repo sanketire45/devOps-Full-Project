@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: sanketire45/wanderlust-frontend-beta:
+          image: sanketire45/wanderlust-frontend-beta:v0.0.0
           ports:
             - containerPort: 5173
 ---
