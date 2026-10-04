@@ -1,0 +1,41 @@
+# =============================================================================
+# ingress.yaml  —  ONE public entry for the whole app (replaces both NodePorts)
+# -----------------------------------------------------------------------------
+# Routing (NGINX matches the LONGEST prefix first, so /api wins over /):
+#     /api...  ->  backend-service:8080   (the API)
+#     /...     ->  frontend-service:5173  (the SPA + all its client-side routes)
+#
+# Because the browser now calls a RELATIVE '/api/...' on the SAME host that
+# served the page, there is NO CORS and NO hardcoded backend URL. Both Services
+# are ClusterIP (private) — only this Ingress is exposed.
+#
+# Needs an NGINX Ingress Controller running (installed via Terraform in Wave B2).
+# No host: set -> matches any host, so you can reach it via the NLB's address
+# until you point a real domain at it.
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wanderlust-ingress
+  namespace: wanderlust
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # API first — /api and everything under it goes to the backend.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8080
+          # Everything else is the frontend SPA.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 5173

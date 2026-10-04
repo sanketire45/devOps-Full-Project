@@ -1,12 +1,13 @@
 # =============================================================================
-# outputs.tf  —  MASTERCLASS: values Terraform prints back to you after apply
+#  outputs.tf  —  useful values Terraform prints after `terraform apply`
 # =============================================================================
+#  🖥️  SAME AS RUNNING BY HAND:   (nothing — just prints facts back to you so
+#        you don't have to hunt in the AWS console)
 #
-# WHY OUTPUTS EXIST:
-#   After `terraform apply`, some facts are only known once AWS creates the
-#   resources (like the cluster's API endpoint URL). `output` blocks pull those
-#   facts back out and print them in your terminal — so you don't have to dig
-#   through the AWS console to find them. They can also feed other tools/modules.
+#  📖  WHAT IT DOES, SIMPLY:
+#        Some facts are only known AFTER AWS builds things (the API endpoint, the
+#        OIDC ARN). `output` blocks surface them in your terminal. The most useful
+#        one hands you the exact `aws eks update-kubeconfig` line to copy-paste.
 # =============================================================================
 
 output "cluster_name" {
@@ -19,10 +20,20 @@ output "cluster_endpoint" {
   value       = aws_eks_cluster.this.endpoint
 }
 
-# The single most useful output: copy-paste this line after apply to point
-# kubectl at the brand-new cluster. It writes the cluster's address + auth into
-# your local ~/.kube/config so `kubectl get nodes` just works.
+# Copy-paste this after apply to point kubectl at the new cluster.
 output "update_kubeconfig_command" {
   description = "Run this to configure kubectl for the cluster"
   value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.this.name}"
+}
+
+# The registered OIDC provider (from oidc.tf). Verify with:
+#   aws iam list-open-id-connect-providers
+output "oidc_provider_arn" {
+  description = "ARN of the IAM OIDC provider (IRSA roles trust this)"
+  value       = aws_iam_openid_connect_provider.eks.arn
+}
+
+output "oidc_provider_url" {
+  description = "The cluster's OIDC issuer URL"
+  value       = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }

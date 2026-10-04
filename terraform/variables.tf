@@ -1,13 +1,14 @@
 # =============================================================================
-# variables.tf  —  MASTERCLASS: the tuneable knobs of your infrastructure
+#  variables.tf  —  the tuneable knobs (set a value ONCE, use it everywhere)
 # =============================================================================
+#  🖥️  SAME AS RUNNING BY HAND:   (nothing — these are just the SETTINGS the
+#        other files read; like the flags you'd type on an eksctl command)
 #
-# WHY VARIABLES EXIST:
-#   Instead of hardcoding "wanderlust" or "t2.large" in ten places, you define
-#   each value ONCE here as a variable, then reference it as `var.<name>`
-#   everywhere. Change it in one spot -> it changes everywhere. This is how real
-#   Terraform stays reusable (the same code can build dev/qa/prod by swapping
-#   values). `default` = the value used if you don't override it.
+#  📖  WHAT IT DOES, SIMPLY:
+#        Instead of hardcoding "wanderlust" or "c7i-flex.large" in many files,
+#        define each once here and reference it as var.<name>. Change it in one
+#        place → it changes everywhere. `default` = the value used if you don't
+#        override it. Each EKS knob below maps to one eksctl flag.
 # =============================================================================
 
 variable "aws_region" {
@@ -16,7 +17,7 @@ variable "aws_region" {
 }
 
 variable "ami_id" {
-  description = "AMI ID for the Jenkins EC2 instance (see ec2.tf)"
+  description = "AMI ID for the Jenkins EC2 instance (see ec2.tf.bak — not managed here anymore)"
   default     = "ami-0b6d9d3d33ba97d99"
 }
 
@@ -27,8 +28,7 @@ variable "instance_type" {
 }
 
 # ---------------------------------------------------------------------------
-# EKS knobs — each mirrors one eksctl flag from README.md, so you can see
-# exactly which CLI flag became which Terraform value.
+# EKS knobs  (each maps to one eksctl flag)
 # ---------------------------------------------------------------------------
 variable "cluster_name" {
   description = "EKS cluster name (eksctl --name)"
@@ -41,7 +41,7 @@ variable "cluster_version" {
 }
 
 variable "node_instance_type" {
-  description = "Worker node machine size (eksctl --node-type)"
+  description = "Worker node machine size (eksctl --node-type). NOTE: c7i-flex.large = 2 vCPU / 4 GiB (compute-optimized = less RAM). Chosen deliberately to hit OOM under load for learning; bump to t3.large/m7i-flex.large (8 GiB) if monitoring OOMs."
   default     = "c7i-flex.large"
 }
 

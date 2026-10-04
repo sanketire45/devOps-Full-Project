@@ -1,0 +1,28 @@
+# =============================================================================
+# argocd-app.yaml  —  tells ArgoCD WHAT to deploy and from WHERE
+# -----------------------------------------------------------------------------
+# Apply this AFTER ArgoCD is running (terraform installs the controller; this
+# Application object can't go in Terraform because its CRD doesn't exist at plan
+# time). Apply once:   kubectl apply -f kubernetes/argocd-app.yaml
+# Then ArgoCD watches your Git repo and keeps the wanderlust namespace in sync.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wanderlust
+  namespace: argocd            # the Application object lives in the argocd ns
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sanketire45/devOps-Full-Project.git
+    targetRevision: main
+    path: kubernetes           # the folder holding your k8s manifests
+  destination:
+    server: https://kubernetes.default.svc   # THIS cluster (in-cluster)
+    namespace: wanderlust      # where the app gets deployed
+  syncPolicy:
+    automated:
+      prune: true              # delete things removed from Git
+      selfHeal: true           # revert manual drift back to Git
+    syncOptions:
+      - CreateNamespace=true   # auto-create the wanderlust namespace

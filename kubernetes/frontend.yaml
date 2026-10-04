@@ -28,11 +28,10 @@ metadata:
   name: frontend-service
   namespace: wanderlust
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: frontend
   ports:
     - port: 5173
       targetPort: 5173
       protocol: TCP
-      nodePort: 31000
