@@ -22,8 +22,9 @@ WORKDIR /app
 # Copy built assets and dependencies from frontend-builder stage
 COPY --from=frontend-builder /app .
 
-# Copy the .env.sample file to .env.local
-COPY .env.docker .env.local
+# NOTE: no .env.local is copied anymore. The frontend calls the backend via a
+# RELATIVE path ('/api/...') routed by the Ingress, so it needs no VITE_API_PATH
+# (or any build-time env). The old `COPY .env.docker .env.local` was removed.
 
 # Expose port 5173 for the Node.js application
 EXPOSE 5173
