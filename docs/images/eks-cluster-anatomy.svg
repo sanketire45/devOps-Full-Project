@@ -1,0 +1,397 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 3580" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <marker id="arwD" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#ea580c"/>
+    </marker>
+    <style>
+      .t{font-weight:700;fill:#0f172a}.s{fill:#334155}.n{fill:#64748b;font-size:11.5px}
+      .nsl{font-weight:700;font-size:14px;fill:#1e293b}
+      .bt{font-weight:700;font-size:13px;fill:#0f172a}.bs{font-size:11.5px;fill:#334155}
+      .cast{font-size:11px;fill:#6d28d9;font-weight:600}
+      .lh{font-weight:700;font-size:15px;fill:#0f172a}.lt{font-size:12.5px;fill:#1e293b}
+      .later{font-weight:700;font-size:12px;fill:#b45309}
+    </style>
+  </defs>
+
+  <rect width="1720" height="3580" fill="#f8fafc"/>
+  <text x="34" y="40" class="t" font-size="24">EKS Cluster Anatomy — what runs where, and its "cast"</text>
+  <text x="34" y="64" class="s" font-size="14">Every app = a Pod + its supporting cast (Deployment · ServiceAccount · RBAC · ConfigMap · Service), grouped in a namespace. Helm installs the whole cast.</text>
+
+  <!-- ============ AWS EDGE ============ -->
+  <rect x="24" y="84" width="1130" height="128" rx="12" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+  <text x="40" y="106" class="nsl" fill="#9a3412">☁️ AWS — OUTSIDE the cluster (created by Terraform / by the LB Controller)</text>
+  <rect x="48" y="118" width="330" height="78" rx="8" fill="#fff" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="62" y="140" class="bt">IAM OIDC provider</text>
+  <text x="62" y="159" class="bs">oidc.tf · the IRSA trust anchor</text>
+  <text x="62" y="177" class="n">"AWS, trust tokens from this cluster"</text>
+  <rect x="402" y="118" width="330" height="78" rx="8" fill="#fff" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="416" y="140" class="bt">IAM role + policy</text>
+  <text x="416" y="159" class="bs">lb-controller.tf</text>
+  <text x="416" y="177" class="n">what the LB Controller may do in AWS</text>
+  <rect x="756" y="118" width="376" height="78" rx="8" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/>
+  <text x="770" y="140" class="bt">NLB (public subnet)</text>
+  <text x="770" y="159" class="bs">internet entry point</text>
+  <text x="770" y="177" class="n">created by the LB Controller when NGINX asks</text>
+
+  <!-- ============ CLUSTER ============ -->
+  <rect x="24" y="230" width="1130" height="1264" rx="14" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="40" y="254" class="nsl" fill="#1e40af">☸️ EKS CLUSTER — your 2 worker nodes (the control plane is AWS-managed &amp; hidden)</text>
+
+  <!-- kube-system -->
+  <rect x="48" y="270" width="1082" height="352" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="64" y="292" class="nsl">📁 namespace: kube-system  —  cluster plumbing (auto) + the LB Controller (you, B2)</text>
+
+  <rect x="66" y="304" width="340" height="86" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="80" y="326" class="bt">aws-node (VPC CNI)</text>
+  <text x="80" y="345" class="bs">DaemonSet · 2 pods (1/node)</text>
+  <text x="80" y="363" class="n">gives every pod a real VPC IP</text>
+  <text x="80" y="380" class="n">AUTO-installed</text>
+
+  <rect x="420" y="304" width="340" height="86" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="434" y="326" class="bt">kube-proxy</text>
+  <text x="434" y="345" class="bs">DaemonSet · 2 pods (1/node)</text>
+  <text x="434" y="363" class="n">routes ClusterIP → pod</text>
+  <text x="434" y="380" class="n">AUTO-installed</text>
+
+  <rect x="774" y="304" width="340" height="86" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="788" y="326" class="bt">coredns</text>
+  <text x="788" y="345" class="bs">Deployment · 2 pods</text>
+  <text x="788" y="363" class="n">DNS: name → ClusterIP</text>
+  <text x="788" y="380" class="n">AUTO-installed</text>
+
+  <!-- LB controller + cast -->
+  <rect x="66" y="402" width="1048" height="206" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="80" y="424" class="bt">aws-load-balancer-controller   ← YOU installed (B2, via Helm)</text>
+  <text x="80" y="443" class="bs">Deployment · 2 pods (HA) · JOB: watches Services/Ingresses → creates &amp; continuously syncs AWS NLBs/ALBs</text>
+  <text x="80" y="463" class="cast">its supporting CAST (installed by the Helm chart):</text>
+  <rect x="80" y="474" width="300" height="118" rx="6" fill="#fff" stroke="#16a34a" stroke-width="1.2"/>
+  <text x="92" y="494" class="bt" font-size="12">ServiceAccount</text>
+  <text x="92" y="512" class="n">the pod's K8s identity,</text>
+  <text x="92" y="528" class="n">ANNOTATED with the IAM</text>
+  <text x="92" y="544" class="n">role ARN → activates IRSA</text>
+  <text x="92" y="566" class="cast" font-size="10">= keyless AWS creds</text>
+  <rect x="396" y="474" width="300" height="118" rx="6" fill="#fff" stroke="#16a34a" stroke-width="1.2"/>
+  <text x="408" y="494" class="bt" font-size="12">RBAC</text>
+  <text x="408" y="512" class="n">ClusterRole + Binding</text>
+  <text x="408" y="528" class="n">= what it may do INSIDE</text>
+  <text x="408" y="544" class="n">K8s (watch svc/ingress)</text>
+  <text x="408" y="566" class="cast" font-size="10">≠ IAM (that's AWS)</text>
+  <rect x="712" y="474" width="384" height="118" rx="6" fill="#fff" stroke="#16a34a" stroke-width="1.2"/>
+  <text x="724" y="494" class="bt" font-size="12">webhook Service</text>
+  <text x="724" y="512" class="n">a stable address for its</text>
+  <text x="724" y="528" class="n">admission webhook (validates</text>
+  <text x="724" y="544" class="n">Ingress objects you create)</text>
+
+  <!-- dashed: lbc creates NLB -->
+  <path d="M590,402 C590,320 650,210 850,198" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arwD)"/>
+  <text x="600" y="300" class="n" fill="#ea580c" font-weight="700">creates &amp; syncs ↑</text>
+
+  <!-- ingress-nginx -->
+  <rect x="48" y="636" width="1082" height="210" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="64" y="658" class="nsl">📁 namespace: ingress-nginx  —  the NGINX router (you, B2)</text>
+  <rect x="66" y="670" width="1048" height="160" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="80" y="692" class="bt">ingress-nginx-controller   ← YOU installed (B2, via Helm)</text>
+  <text x="80" y="711" class="bs">Deployment · 1 pod · JOB: reads your ingress.yaml → routes HTTP by path (/api→backend, /→frontend)</text>
+  <text x="80" y="731" class="cast">its supporting CAST:</text>
+  <rect x="80" y="742" width="210" height="76" rx="6" fill="#fff" stroke="#8b5cf6" stroke-width="1.2"/>
+  <text x="92" y="762" class="bt" font-size="12">ServiceAccount</text>
+  <text x="92" y="780" class="n">its K8s identity</text>
+  <text x="92" y="797" class="n">(no IAM needed)</text>
+  <rect x="304" y="742" width="210" height="76" rx="6" fill="#fff" stroke="#8b5cf6" stroke-width="1.2"/>
+  <text x="316" y="762" class="bt" font-size="12">RBAC</text>
+  <text x="316" y="780" class="n">may watch Ingresses</text>
+  <text x="316" y="797" class="n">&amp; Services</text>
+  <rect x="528" y="742" width="210" height="76" rx="6" fill="#fff" stroke="#8b5cf6" stroke-width="1.2"/>
+  <text x="540" y="762" class="bt" font-size="12">ConfigMap</text>
+  <text x="540" y="780" class="n">NGINX settings</text>
+  <text x="540" y="797" class="n">(tuning/config)</text>
+  <rect x="752" y="742" width="344" height="76" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.6"/>
+  <text x="764" y="762" class="bt" font-size="12">Service — type: LoadBalancer ⭐</text>
+  <text x="764" y="780" class="n">THIS is what triggers the NLB above.</text>
+  <text x="764" y="797" class="n">The LB Controller sees it → builds the NLB.</text>
+
+  <!-- wanderlust (later) -->
+  <rect x="48" y="860" width="1082" height="196" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="64" y="882" class="nsl">📁 namespace: wanderlust  —  YOUR APP</text>
+  <text x="300" y="882" class="later">⏳ NOT yet — ArgoCD deploys this later from your Git repo</text>
+  <rect x="66" y="896" width="250" height="146" rx="8" fill="#fff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="80" y="918" class="bt">frontend</text>
+  <text x="80" y="937" class="bs">Deployment + pod</text>
+  <text x="80" y="955" class="n">+ frontend-service</text>
+  <text x="80" y="972" class="n">(ClusterIP :5173)</text>
+  <text x="80" y="994" class="n">serves the React SPA</text>
+  <rect x="330" y="896" width="250" height="146" rx="8" fill="#fff" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="344" y="918" class="bt">backend</text>
+  <text x="344" y="937" class="bs">Deployment + pod</text>
+  <text x="344" y="955" class="n">+ backend-service</text>
+  <text x="344" y="972" class="n">(ClusterIP :8080)</text>
+  <text x="344" y="994" class="n">the Node API</text>
+  <rect x="594" y="896" width="250" height="146" rx="8" fill="#fff" stroke="#d97706" stroke-width="1.5"/>
+  <text x="608" y="918" class="bt">mongo</text>
+  <text x="608" y="937" class="bs">Deployment + pod</text>
+  <text x="608" y="955" class="n">+ mongo-service (ClusterIP)</text>
+  <text x="608" y="972" class="n">+ PVC → PV (EBS)</text>
+  <text x="608" y="994" class="n">the database + storage</text>
+  <rect x="858" y="896" width="250" height="146" rx="8" fill="#fff" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="872" y="918" class="bt">redis</text>
+  <text x="872" y="937" class="bs">Deployment + pod</text>
+  <text x="872" y="955" class="n">+ redis-service (ClusterIP)</text>
+  <text x="872" y="994" class="n">the cache</text>
+
+  <!-- argocd (later) -->
+  <rect x="48" y="1070" width="1082" height="120" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="64" y="1092" class="nsl">📁 namespace: argocd  —  the GitOps delivery engine</text>
+  <text x="300" y="1092" class="later">⏳ NOT yet — you install it, then IT deploys the wanderlust app above</text>
+  <text x="66" y="1120" class="bs">7 pods: argocd-server (UI/API) · repo-server (renders manifests) · application-controller (the brain) · redis · dex · notifications · applicationset</text>
+  <text x="66" y="1142" class="n">JOB: watches your Git repo → applies the kubernetes/ manifests into the wanderlust namespace → keeps cluster = Git</text>
+  <text x="66" y="1164" class="n">(each of these pods ALSO has its own cast — SA, RBAC, ConfigMaps — bundled by the ArgoCD install)</text>
+
+  <!-- system ns -->
+  <rect x="48" y="1204" width="1082" height="60" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="64" y="1228" class="nsl">📁 default · kube-node-lease · kube-public</text>
+  <text x="64" y="1250" class="n">internal bookkeeping / empty — you don't deploy here (your app goes in its own "wanderlust" namespace)</text>
+
+  <!-- traffic note -->
+  <rect x="48" y="1286" width="1082" height="188" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="64" y="1310" class="nsl" fill="#0e7490">🔵 How a request flows through all this (once everything is up)</text>
+  <text x="64" y="1336" class="bs">① internet → NLB (public subnet)  →  ② ingress-nginx-controller Service (type LoadBalancer)  →  ③ NGINX pod reads ingress.yaml</text>
+  <text x="64" y="1358" class="bs">④ /api → backend-service → backend pod   |   / → frontend-service → frontend pod</text>
+  <text x="64" y="1380" class="bs">⑤ backend pod → mongo-service → mongo pod (and redis-service → redis pod), all internal ClusterIP</text>
+  <text x="64" y="1408" class="n">The AWS LB Controller isn't in this live path — it just BUILT the NLB and keeps its target list pointed at the live NGINX pods.</text>
+  <text x="64" y="1430" class="n">CoreDNS resolves the service NAMES → ClusterIPs; kube-proxy does each ClusterIP → pod hop; VPC CNI gave every pod its IP.</text>
+  <text x="64" y="1456" class="cast" font-size="12">Plumbing (CNI/kube-proxy/CoreDNS) is invisible glue that makes all the arrows above actually work.</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="1180" y="84" width="516" height="470" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1200" y="112" class="lh">🎭 The "cast" — every app brings these</text>
+  <text x="1200" y="142" class="lt"><tspan font-weight="700">Deployment</tspan> — the supervisor that keeps N pods</text>
+  <text x="1218" y="160" class="lt">running, restarts them, rolls out updates.</text>
+  <text x="1200" y="186" class="lt"><tspan font-weight="700">Pod</tspan> — the actual running container (the app).</text>
+  <text x="1200" y="212" class="lt"><tspan font-weight="700">ServiceAccount</tspan> — the pod's ID badge inside</text>
+  <text x="1218" y="230" class="lt">Kubernetes. For IRSA it's linked to an IAM role,</text>
+  <text x="1218" y="248" class="lt">so the pod also gets an AWS identity.</text>
+  <text x="1200" y="274" class="lt"><tspan font-weight="700">RBAC</tspan> (ClusterRole + Binding) — what that badge</text>
+  <text x="1218" y="292" class="lt">may DO inside K8s (e.g. "watch Services").</text>
+  <text x="1218" y="310" class="lt">This is K8s permissions — NOT the same as IAM.</text>
+  <text x="1200" y="336" class="lt"><tspan font-weight="700">ConfigMap</tspan> — the app's settings file, injected</text>
+  <text x="1218" y="354" class="lt">into the pod (config without rebuilding the image).</text>
+  <text x="1200" y="380" class="lt"><tspan font-weight="700">Service</tspan> — a stable network address for the pod(s):</text>
+  <text x="1218" y="398" class="lt">• ClusterIP = internal only</text>
+  <text x="1218" y="416" class="lt">• LoadBalancer = asks AWS for an external LB ⭐</text>
+  <text x="1200" y="446" class="lt" fill="#6d28d9"><tspan font-weight="700">Why it repeats:</tspan> each app is independent, so each</text>
+  <text x="1218" y="464" class="lt" fill="#6d28d9">brings its own cast. Helm bundles it into one chart,</text>
+  <text x="1218" y="482" class="lt" fill="#6d28d9">so "install chart" = pod + SA + RBAC + ConfigMap +</text>
+  <text x="1218" y="500" class="lt" fill="#6d28d9">Service, all at once.</text>
+  <text x="1200" y="528" class="lt"><tspan font-weight="700">IAM ≠ RBAC:</tspan> IAM = AWS permissions (create an NLB);</text>
+  <text x="1218" y="546" class="lt">RBAC = Kubernetes permissions (read an Ingress).</text>
+
+  <rect x="1180" y="570" width="516" height="300" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1200" y="598" class="lh">⏱️ What's in the cluster — NOW vs LATER</text>
+  <text x="1200" y="628" class="lt" font-weight="700">After terraform apply (B1 + B2):</text>
+  <text x="1218" y="648" class="lt">✅ kube-system: CNI, kube-proxy, CoreDNS</text>
+  <text x="1218" y="666" class="lt">✅ kube-system: AWS LB Controller (2 pods)</text>
+  <text x="1218" y="684" class="lt">✅ ingress-nginx: NGINX controller (1 pod)</text>
+  <text x="1218" y="702" class="lt">✅ AWS: the NLB + IAM OIDC/role</text>
+  <text x="1200" y="730" class="lt" font-weight="700">After you install ArgoCD:</text>
+  <text x="1218" y="750" class="lt">➕ argocd namespace (7 pods)</text>
+  <text x="1200" y="778" class="lt" font-weight="700">After ArgoCD syncs your Git repo:</text>
+  <text x="1218" y="798" class="lt">➕ wanderlust namespace (frontend, backend,</text>
+  <text x="1236" y="816" class="lt">mongo, redis) + the Ingress goes live</text>
+  <text x="1200" y="846" class="lt" fill="#b45309">So right now the app is NOT there yet — the</text>
+  <text x="1218" y="864" class="lt" fill="#b45309">controllers + plumbing come first.</text>
+
+  <rect x="1180" y="886" width="516" height="266" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1200" y="914" class="lh">🧱 The layers (memorize this shape)</text>
+  <text x="1200" y="944" class="lt"><tspan font-weight="700">Layer 4</tspan> YOUR APP — frontend/backend/mongo/redis</text>
+  <text x="1200" y="970" class="lt"><tspan font-weight="700">Layer 3</tspan> DELIVERY — ArgoCD (GitOps)</text>
+  <text x="1200" y="996" class="lt"><tspan font-weight="700">Layer 2</tspan> TRAFFIC-IN — NGINX + AWS LB Controller</text>
+  <text x="1200" y="1022" class="lt"><tspan font-weight="700">Layer 1</tspan> PLUMBING — CNI · kube-proxy · CoreDNS</text>
+  <text x="1200" y="1048" class="lt"><tspan font-weight="700">Layer 0</tspan> NODES — 2× EC2 worker nodes</text>
+  <text x="1200" y="1074" class="lt"><tspan font-weight="700">Layer-1</tspan> AWS EDGE — NLB + IAM (OIDC/role)</text>
+  <text x="1200" y="1108" class="lt" fill="#334155">Control plane (apiserver/scheduler/etcd) is</text>
+  <text x="1200" y="1126" class="lt" fill="#334155">AWS-managed &amp; hidden — never in this picture.</text>
+
+  <text x="34" y="1506" class="n">Wanderlust on EKS · cluster anatomy &amp; the supporting cast · pairs with the two request-flow diagrams</text>
+
+  <!-- ===================== DIAGRAM 2: NODE-BY-NODE VIEW ===================== -->
+  <line x1="24" y1="1545" x2="1696" y2="1545" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="34" y="1585" class="t" font-size="24">Node-by-Node View — Control Plane vs each Worker Node</text>
+  <text x="34" y="1609" class="s" font-size="14">In EKS, `kubectl get nodes` shows ONLY the 2 worker nodes — the control plane is AWS-managed and hidden. Node-level processes (kubelet, containerd) are NOT pods.</text>
+
+  <!-- CONTROL PLANE -->
+  <rect x="24" y="1630" width="1672" height="560" rx="12" fill="#e5e7eb" stroke="#64748b" stroke-width="2"/>
+  <text x="44" y="1656" class="nsl">🧠 CONTROL PLANE — AWS-managed &amp; HIDDEN · not in `kubectl get nodes` · runs across 3 AZs (HA) · flat $0.10/hr</text>
+
+  <rect x="44" y="1680" width="536" height="230" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="58" y="1703" class="bt">kube-apiserver  — the front door</text>
+  <text x="58" y="1724" class="bs">kubectl AND every component talk ONLY to this. Nothing talks</text>
+  <text x="58" y="1741" class="bs">to anything else directly — the apiserver is the single hub.</text>
+  <text x="58" y="1762" class="bs">For each request it runs: authentication → authorization</text>
+  <text x="58" y="1779" class="bs">(RBAC) → admission control → then reads/writes etcd.</text>
+  <text x="58" y="1804" class="cast">🎯 It is the ONLY component that talks to etcd. Stateless, so</text>
+  <text x="58" y="1821" class="cast">it scales horizontally. "Everything goes through the apiserver."</text>
+  <text x="58" y="1848" class="n">how it connects: receives your YAML, stores desired state,</text>
+  <text x="58" y="1865" class="n">and serves it to scheduler/kubelet/controllers that watch it.</text>
+
+  <rect x="600" y="1680" width="536" height="230" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="614" y="1703" class="bt">etcd  — the cluster database</text>
+  <text x="614" y="1724" class="bs">A distributed key-value store holding EVERY object in the</text>
+  <text x="614" y="1741" class="bs">cluster (pods, services, secrets, configmaps…). The single</text>
+  <text x="614" y="1758" class="bs">source of truth — "desired state" lives here.</text>
+  <text x="614" y="1783" class="cast">🎯 The ONLY stateful component. Needs odd-number quorum</text>
+  <text x="614" y="1800" class="cast">(3 or 5) for HA. Back it up — lose etcd = lose the cluster.</text>
+  <text x="614" y="1817" class="cast">EKS runs &amp; backs it up for you.</text>
+  <text x="614" y="1844" class="n">how it connects: only the apiserver reads/writes it; no other</text>
+  <text x="614" y="1861" class="n">component touches etcd directly.</text>
+
+  <rect x="1152" y="1680" width="536" height="230" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="1166" y="1703" class="bt">kube-scheduler  — places pods</text>
+  <text x="1166" y="1724" class="bs">Watches the apiserver for new pods with no node yet. Picks</text>
+  <text x="1166" y="1741" class="bs">the best node using: resource requests, taints/tolerations,</text>
+  <text x="1166" y="1758" class="bs">node/pod affinity, topology spread.</text>
+  <text x="1166" y="1783" class="cast">🎯 It only WRITES the node assignment — it does NOT start</text>
+  <text x="1166" y="1800" class="cast">the pod. "Scheduler places, kubelet runs." Uses requests,</text>
+  <text x="1166" y="1817" class="cast">not limits, to decide fit.</text>
+  <text x="1166" y="1844" class="n">how it connects: reads unscheduled pods from apiserver,</text>
+  <text x="1166" y="1861" class="n">writes the chosen node back to apiserver.</text>
+
+  <rect x="44" y="1925" width="812" height="230" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="58" y="1948" class="bt">kube-controller-manager  — the reconcile loops</text>
+  <text x="58" y="1969" class="bs">A bundle of ~30 controllers, each running a loop that makes ACTUAL state match DESIRED state. Examples:</text>
+  <text x="58" y="1986" class="bs">• Deployment controller → creates ReplicaSets → which create Pods (keeps N replicas alive)</text>
+  <text x="58" y="2003" class="bs">• Node controller → marks a node NotReady / evicts pods if a node dies</text>
+  <text x="58" y="2020" class="bs">• Endpoints controller → keeps each Service's list of healthy pod IPs up to date</text>
+  <text x="58" y="2045" class="cast">🎯 This is the "controller/operator pattern" at the core of Kubernetes: watch desired, observe actual, act to close the gap.</text>
+  <text x="58" y="2066" class="cast">If you delete a pod of a Deployment, THIS is what notices and recreates it.</text>
+  <text x="58" y="2093" class="n">how it connects: watches + writes objects through the apiserver (never etcd directly).</text>
+  <text x="58" y="2118" class="n">Interview framing: "the controller-manager is why Kubernetes is declarative and self-healing."</text>
+
+  <rect x="876" y="1925" width="812" height="230" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="890" y="1948" class="bt">cloud-controller-manager  — the AWS bridge</text>
+  <text x="890" y="1969" class="bs">Holds all the cloud-provider-specific logic, kept OUT of core Kubernetes. On EKS it integrates with AWS to:</text>
+  <text x="890" y="1986" class="bs">• provision an ELB/NLB when you create a Service of type=LoadBalancer (the in-tree path)</text>
+  <text x="890" y="2003" class="bs">• manage node lifecycle (delete the Node object when its EC2 instance is terminated)</text>
+  <text x="890" y="2020" class="bs">• set up routes / attach volumes via the cloud APIs</text>
+  <text x="890" y="2045" class="cast">🎯 This is the historical way Service type=LoadBalancer got an AWS LB. The modern, richer way is the</text>
+  <text x="890" y="2062" class="cast">AWS Load Balancer Controller (a pod YOU install) — which is why we installed it for NLBs/ALBs.</text>
+  <text x="890" y="2089" class="n">how it connects: watches Services/Nodes via apiserver, calls AWS APIs to make reality match.</text>
+  <text x="890" y="2118" class="n">On EKS all of the above control-plane pieces are AWS-managed — you never SSH in or scale them.</text>
+
+  <text x="44" y="2178" class="n">You never patch or scale any of these — AWS does. In self-managed Kubernetes (kubeadm) you'd run all 5 yourself on a dedicated control-plane node.</text>
+
+  <!-- POD CREATION FLOW -->
+  <rect x="24" y="2210" width="1672" height="100" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="44" y="2234" class="nsl" fill="#0e7490">🔵 Interview classic: "what happens when you kubectl apply a Deployment?" — follow the arrows across control plane → node</text>
+  <text x="44" y="2260" class="bs">kubectl → ① apiserver (authN → authZ/RBAC → admission) → ② stores desired state in etcd → ③ controller-manager creates ReplicaSet → Pod objects →</text>
+  <text x="44" y="2282" class="bs">④ scheduler assigns each Pod a node → ⑤ that node's kubelet sees "a pod is mine" → ⑥ kubelet tells containerd to pull the image &amp; run it →</text>
+  <text x="44" y="2302" class="bs">⑦ kubelet reports status back to the apiserver → etcd. The control plane plans; the node runs. Live user traffic never touches this path.</text>
+
+  <!-- WORKER NODE 1 -->
+  <rect x="24" y="2330" width="828" height="1000" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="44" y="2358" class="nsl">🖥️ Worker Node 1 — ip-172-31-33-239</text>
+  <text x="44" y="2380" class="n">a REAL EC2 VM · c7i-flex.large · 2 vCPU / ~3.07 GiB allocatable · us-east-2c · shows up in `kubectl get nodes`</text>
+
+  <text x="44" y="2408" class="cast" font-weight="700">① Node PROCESSES — run directly on the OS, NOT pods</text>
+  <rect x="44" y="2418" width="788" height="120" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="58" y="2440" class="bt">kubelet  — the node's agent (a systemd process)</text>
+  <text x="58" y="2460" class="bs">Watches the apiserver for pods assigned to THIS node, then tells containerd to run them. Reports pod + node</text>
+  <text x="58" y="2477" class="bs">health back to the apiserver, and runs liveness/readiness probes. cAdvisor (inside kubelet) gives container metrics.</text>
+  <text x="58" y="2500" class="cast">🎯 It watches the API SERVER, not etcd. It is a PROCESS on the node, not a pod. "Scheduler places, kubelet runs."</text>
+  <text x="58" y="2522" class="n">how it connects: apiserver ⇄ kubelet ⇄ containerd. If kubelet dies, the node goes NotReady.</text>
+
+  <rect x="44" y="2546" width="788" height="92" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="58" y="2568" class="bt">containerd  — the container runtime (a process)</text>
+  <text x="58" y="2588" class="bs">Pulls images and actually runs the containers. kubelet talks to it through the CRI (Container Runtime Interface).</text>
+  <text x="58" y="2610" class="cast">🎯 Docker was replaced by containerd — "dockershim" was removed in Kubernetes 1.24. Path: kubelet → CRI → containerd → runc → container.</text>
+
+  <text x="44" y="2668" class="cast" font-weight="700">② DaemonSet PODS — exactly 1 per node (so EVERY node has these)</text>
+  <rect x="44" y="2678" width="788" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="58" y="2700" class="bt">aws-node  (Amazon VPC CNI)</text>
+  <text x="58" y="2720" class="bs">Gives every pod ON THIS NODE a real, routable VPC IP (from ENIs attached to the EC2 instance).</text>
+  <text x="58" y="2740" class="cast">🎯 This is why an ALB can target pod IPs directly, and why pods-per-node is capped by ENIs/IPs (29 here).</text>
+  <text x="58" y="2760" class="n">"Prefix delegation" raises that pod cap. The CNI is what makes pod networking work at all.</text>
+
+  <rect x="44" y="2790" width="788" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="58" y="2812" class="bt">kube-proxy</text>
+  <text x="58" y="2832" class="bs">Programs THIS node's iptables / IPVS rules so a Service's ClusterIP:port is rewritten to a real pod IP.</text>
+  <text x="58" y="2852" class="cast">🎯 kube-proxy is HOW a virtual ClusterIP actually reaches a pod. It runs on every node and does the node→pod hop.</text>
+  <text x="58" y="2872" class="n">It reads the Endpoints (healthy pod IPs) the control plane maintains, and keeps its local rules in sync.</text>
+
+  <text x="44" y="2920" class="cast" font-weight="700">③ Scheduled PODS — the scheduler happened to place these here</text>
+  <rect x="44" y="2930" width="788" height="88" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="58" y="2952" class="bt">coredns × 2  (both landed on Node 1 in your real cluster)</text>
+  <text x="58" y="2972" class="bs">Cluster DNS: resolves Service NAMES → ClusterIP (e.g. backend-service → 10.100.x.x).</text>
+  <text x="58" y="2992" class="cast">🎯 It's a Deployment (2 pods), NOT per-node — the scheduler can put both on one node, as it did here.</text>
+
+  <rect x="44" y="3026" width="788" height="88" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="58" y="3048" class="bt">aws-load-balancer-controller  (1 of its 2 HA replicas)</text>
+  <text x="58" y="3068" class="bs">Talks OUT to AWS to create/sync NLBs &amp; ALBs. Uses IRSA (its ServiceAccount → IAM role) for AWS creds.</text>
+  <text x="58" y="3088" class="n">Its 2 replicas usually spread across both nodes for high availability.</text>
+
+  <rect x="44" y="3122" width="788" height="80" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="58" y="3144" class="bt">your app pods — LATER (ArgoCD)</text>
+  <text x="58" y="3164" class="bs">frontend / backend / mongo / redis will be scheduled across both nodes once ArgoCD deploys them.</text>
+  <text x="58" y="3184" class="n">The scheduler decides which node each lands on — and it doesn't matter, networking abstracts location.</text>
+
+  <!-- WORKER NODE 2 -->
+  <rect x="868" y="2330" width="828" height="1000" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="888" y="2358" class="nsl">🖥️ Worker Node 2 — ip-172-31-7-0</text>
+  <text x="888" y="2380" class="n">a REAL EC2 VM · c7i-flex.large · 2 vCPU / ~3.07 GiB allocatable · also in `kubectl get nodes`</text>
+
+  <text x="888" y="2408" class="cast" font-weight="700">① Node PROCESSES — identical role to Node 1 (every node has these)</text>
+  <rect x="888" y="2418" width="788" height="120" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="902" y="2440" class="bt">kubelet  — the node agent (process)</text>
+  <text x="902" y="2460" class="bs">Same job as on Node 1: watches the apiserver for pods assigned to THIS node and runs them via containerd,</text>
+  <text x="902" y="2477" class="bs">reports health, runs probes. Each node has its OWN kubelet — it only manages its own node's pods.</text>
+  <text x="902" y="2500" class="cast">🎯 Every worker node runs its own kubelet + containerd. They're the two things that make a machine a "node".</text>
+  <text x="902" y="2522" class="n">how it connects: apiserver ⇄ this node's kubelet ⇄ this node's containerd.</text>
+
+  <rect x="888" y="2546" width="788" height="92" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="902" y="2568" class="bt">containerd  — the container runtime (process)</text>
+  <text x="902" y="2588" class="bs">Same as Node 1: pulls images, runs containers via the CRI. Independent per node.</text>
+  <text x="902" y="2610" class="cast">🎯 A "node" = a VM running kubelet + a container runtime + kube-proxy + CNI. That combo is the minimum to join a cluster.</text>
+
+  <text x="888" y="2668" class="cast" font-weight="700">② DaemonSet PODS — again, exactly 1 per node</text>
+  <rect x="888" y="2678" width="788" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="902" y="2700" class="bt">aws-node  (VPC CNI)</text>
+  <text x="902" y="2720" class="bs">This node's own copy — assigns VPC IPs to pods running on Node 2. (A DaemonSet guarantees one per node.)</text>
+  <text x="902" y="2740" class="cast">🎯 DaemonSet = "run exactly one copy of this pod on every node" (used for per-node agents: CNI, kube-proxy, log/metric agents).</text>
+  <text x="902" y="2760" class="n">Add a 3rd node → the DaemonSet automatically puts an aws-node + kube-proxy on it too.</text>
+
+  <rect x="888" y="2790" width="788" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="902" y="2812" class="bt">kube-proxy</text>
+  <text x="902" y="2832" class="bs">This node's own copy — programs Node 2's iptables/IPVS so ClusterIP traffic landing here reaches a pod.</text>
+  <text x="902" y="2852" class="cast">🎯 Any node can receive traffic for any Service and relay it to a pod anywhere — because every node runs kube-proxy.</text>
+  <text x="902" y="2872" class="n">This is why "hit any node, it routes correctly" works (the NodePort lesson).</text>
+
+  <text x="888" y="2920" class="cast" font-weight="700">③ Scheduled PODS — placed here by the scheduler</text>
+  <rect x="888" y="2930" width="788" height="88" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="902" y="2952" class="bt">aws-load-balancer-controller  (the other HA replica)</text>
+  <text x="902" y="2972" class="bs">The 2nd of the 2 replicas — spread here for high availability (if Node 1 dies, this one keeps managing LBs).</text>
+  <text x="902" y="2992" class="cast">🎯 2 replicas on different nodes = survives a single node failure. Standard HA pattern for controllers.</text>
+
+  <rect x="888" y="3026" width="788" height="88" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="902" y="3048" class="bt">ingress-nginx-controller  (1 pod)</text>
+  <text x="902" y="3068" class="bs">Receives traffic from the NLB and routes by path (/api → backend, / → frontend) per your ingress.yaml.</text>
+  <text x="902" y="3088" class="n">Scale it to 2+ replicas in production for HA; here 1 is fine for learning.</text>
+
+  <rect x="888" y="3122" width="788" height="80" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="902" y="3144" class="bt">your app pods — LATER (ArgoCD)</text>
+  <text x="902" y="3164" class="bs">Some of frontend/backend/mongo/redis will land here too — the scheduler balances across both nodes.</text>
+  <text x="902" y="3184" class="n">e.g. backend pod on Node 1 AND Node 2 → the Service load-balances across both.</text>
+
+  <!-- INDUSTRY LEGEND -->
+  <rect x="24" y="3350" width="1672" height="200" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="44" y="3378" class="lh">🏭 What REAL production clusters also run on every node (industry-grade — not in this basic cluster yet)</text>
+  <text x="44" y="3406" class="lt">• <tspan font-weight="700">node-exporter</tspan> (DaemonSet) — node CPU/RAM/disk metrics for Prometheus.   • <tspan font-weight="700">kube-state-metrics</tspan> — object/state metrics.</text>
+  <text x="44" y="3430" class="lt">• <tspan font-weight="700">fluent-bit / fluentd</tspan> (DaemonSet) — ships container logs to CloudWatch/ELK/Loki.   • <tspan font-weight="700">Datadog / OTEL agent</tspan> (DaemonSet) — APM + metrics + traces.</text>
+  <text x="44" y="3454" class="lt">• <tspan font-weight="700">EBS / EFS CSI driver</tspan> — lets PVCs provision real AWS volumes (MongoDB needs this).   • <tspan font-weight="700">Falco</tspan> (DaemonSet) — runtime security.</text>
+  <text x="44" y="3478" class="lt">• <tspan font-weight="700">Cluster Autoscaler or Karpenter</tspan> — watch for unschedulable pods and ADD nodes automatically (then remove idle ones).</text>
+  <text x="44" y="3504" class="cast">🎯 Pattern to remember: anything that must run "once on every node" (agents for logs, metrics, security, networking) ships as a <tspan font-weight="700">DaemonSet</tspan>.</text>
+  <text x="44" y="3528" class="cast">Node scaling itself is done by Cluster Autoscaler (older) or Karpenter (newer, AWS-native) — a top Dublin interview topic.</text>
+
+  <text x="34" y="3566" class="n">Node-by-node view · control plane (AWS-managed) vs worker nodes · processes vs DaemonSets vs scheduled pods · Wanderlust on EKS</text>
+</svg>

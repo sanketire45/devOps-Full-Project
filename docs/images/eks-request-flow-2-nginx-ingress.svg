@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1740 1440" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <marker id="arwB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arwG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="arwD" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#9333ea"/>
+    </marker>
+    <style>
+      .t{font-weight:700;fill:#0f172a}.s{fill:#334155}.n{fill:#64748b;font-size:12px}
+      .bt{font-weight:700;font-size:14px;fill:#0f172a}.bs{font-size:12px;fill:#334155}
+      .port{font-weight:700;font-size:12px;fill:#7c3aed}.zl{font-weight:700;fill:#334155}
+      .lh{font-weight:700;font-size:15px;fill:#0f172a}.lt{font-size:12.5px;fill:#1e293b}
+      .flow{stroke:#334155;stroke-width:2.5;fill:none}
+      .flowB{stroke:#2563eb;stroke-width:2.5;fill:none}
+      .flowG{stroke:#16a34a;stroke-width:2.5;fill:none}
+      .dns{stroke:#9333ea;stroke-width:2;stroke-dasharray:5 4;fill:none}
+    </style>
+  </defs>
+
+  <rect width="1740" height="1440" fill="#f8fafc"/>
+  <text x="34" y="40" class="t" font-size="24">Wanderlust on EKS — Full Request Flow ①→⑨</text>
+  <text x="34" y="64" class="s" font-size="15">Approach 2: NGINX Ingress Controller — a dumb NLB funnels traffic to NGINX pods, which do path routing INSIDE the cluster</text>
+
+  <!-- INTERNET -->
+  <rect x="24" y="84" width="1180" height="118" rx="12" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+  <text x="40" y="106" class="zl" font-size="13">🌐 INTERNET  (outside AWS)</text>
+  <rect x="44" y="116" width="300" height="74" rx="10" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+  <text x="58" y="138" class="bt">① User Browser</text>
+  <text x="58" y="157" class="bs">https://wanderlust.example.com</text>
+  <text x="58" y="174" class="bs">SPA runs: axios.get(<tspan fill="#7c3aed" font-weight="700">'/api/posts'</tspan>) — relative</text>
+  <rect x="470" y="116" width="270" height="74" rx="10" fill="#fff" stroke="#0891b2" stroke-width="2"/>
+  <text x="484" y="138" class="bt">Route 53 (DNS)</text>
+  <text x="484" y="157" class="bs">name → the NLB's address</text>
+  <text x="484" y="174" class="n">resolves NAME→IP only (no ports)</text>
+  <rect x="820" y="110" width="360" height="84" rx="10" fill="#e5e7eb" stroke="#94a3b8" stroke-width="2"/>
+  <text x="836" y="132" class="bt">EKS Control Plane</text>
+  <text x="836" y="151" class="bs">AWS-managed · hidden · multi-AZ</text>
+  <text x="836" y="169" class="n">NOT in the request path. Prepares</text>
+  <text x="836" y="184" class="n">routing rules on nodes in advance.</text>
+  <path class="dns" d="M344,150 L466,150" marker-end="url(#arwD)"/>
+  <text x="352" y="142" class="n" fill="#9333ea">DNS lookup</text>
+
+  <!-- VPC -->
+  <rect x="24" y="214" width="1180" height="1198" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+  <text x="40" y="238" class="zl" font-size="13">🏢 VPC  (2 Availability Zones · public + private subnets · IGW + NAT)</text>
+
+  <!-- Public subnet + NLB (dumb) -->
+  <rect x="40" y="250" width="1148" height="110" rx="10" fill="#fef9c3" stroke="#eab308" stroke-width="1.5"/>
+  <text x="54" y="271" class="zl" font-size="12">PUBLIC SUBNET</text>
+  <rect x="300" y="258" width="600" height="94" rx="10" fill="#f97316" stroke="#c2410c" stroke-width="2"/>
+  <text x="316" y="281" class="bt" fill="#fff">② AWS NLB  (Layer 4 — a DUMB TCP pipe)</text>
+  <text x="316" y="301" class="bs" fill="#fff">No path logic. Just forwards TCP :443 into the cluster.</text>
+  <text x="316" y="320" class="bs" fill="#fff">Created AUTOMATICALLY when NGINX was installed</text>
+  <text x="316" y="338" class="bs" fill="#fff">(its Service type=LoadBalancer spawned this NLB).</text>
+
+  <!-- Browser -> NLB -->
+  <path class="flowB" d="M194,190 L194,244 Q194,258 210,258 L360,258 L400,256" marker-end="url(#arwB)"/>
+  <text x="204" y="232" class="n" fill="#2563eb">② HTTPS 443 → NLB</text>
+
+  <!-- EKS CLUSTER -->
+  <rect x="40" y="376" width="1148" height="1020" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="56" y="399" class="zl" font-size="13">☸️ EKS CLUSTER  (worker nodes in PRIVATE subnets · kube-proxy on every node)</text>
+
+  <!-- NGINX controller (the router lives HERE) -->
+  <rect x="120" y="416" width="740" height="92" rx="10" fill="#0f766e" stroke="#134e4a" stroke-width="2"/>
+  <text x="134" y="440" class="bt" fill="#fff">③ NGINX Ingress Controller  (PODS inside the cluster)  ← the router lives here</text>
+  <text x="134" y="461" class="bs" fill="#e6fffb">🔒 TLS terminates here (cert in a K8s Secret / cert-manager)</text>
+  <text x="134" y="481" class="bs" fill="#e6fffb">④ Reads your Ingress rules &amp; does the PATH routing:</text>
+  <text x="134" y="500" class="bs" fill="#e6fffb">      /  →  frontend-service        /api  →  backend-service</text>
+  <path class="flowB" d="M600,352 L600,412" marker-end="url(#arwB)"/>
+  <text x="606" y="378" class="n" fill="#2563eb">TCP passthrough</text>
+
+  <!-- Edge services -->
+  <rect x="120" y="540" width="250" height="78" rx="10" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="134" y="562" class="bt">frontend-service</text>
+  <text x="134" y="580" class="bs">type ClusterIP (virtual)</text>
+  <text x="134" y="599" class="port">port 5173 → targetPort 5173</text>
+  <text x="134" y="613" class="n">selector: app=frontend</text>
+  <rect x="600" y="540" width="250" height="78" rx="10" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="614" y="562" class="bt">backend-service</text>
+  <text x="614" y="580" class="bs">type ClusterIP (virtual)</text>
+  <text x="614" y="599" class="port">port 8080 → targetPort 8080</text>
+  <text x="614" y="613" class="n">selector: app=backend</text>
+  <path class="flow" d="M245,508 L245,536" marker-end="url(#arw)"/>
+  <text x="250" y="528" class="n">④ / →</text>
+  <path class="flow" d="M720,508 L720,536" marker-end="url(#arw)"/>
+  <text x="726" y="528" class="n">④ /api →</text>
+
+  <!-- kube-proxy -->
+  <rect x="120" y="636" width="730" height="34" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="134" y="658" class="bs">⑤ <tspan font-weight="700">kube-proxy</tspan> (on each node): rewrites ClusterIP:port → a live pod IP:targetPort · picks a pod via Endpoints (the label match)</text>
+
+  <!-- App pods -->
+  <rect x="120" y="688" width="170" height="78" rx="10" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="134" y="710" class="bt" font-size="13">frontend pod</text>
+  <text x="134" y="728" class="port">:5173</text>
+  <text x="134" y="745" class="n">app=frontend</text>
+  <text x="134" y="761" class="n">Node 1</text>
+  <rect x="300" y="688" width="170" height="78" rx="10" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="314" y="710" class="bt" font-size="13">frontend pod</text>
+  <text x="314" y="728" class="port">:5173</text>
+  <text x="314" y="745" class="n">app=frontend</text>
+  <text x="314" y="761" class="n">Node 2</text>
+  <rect x="600" y="688" width="170" height="78" rx="10" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/>
+  <text x="614" y="710" class="bt" font-size="13">backend pod</text>
+  <text x="614" y="728" class="port">:8080</text>
+  <text x="614" y="745" class="n">app=backend</text>
+  <text x="614" y="761" class="n">Node 1</text>
+  <rect x="790" y="688" width="170" height="78" rx="10" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/>
+  <text x="804" y="710" class="bt" font-size="13">backend pod</text>
+  <text x="804" y="728" class="port">:8080</text>
+  <text x="804" y="745" class="n">app=backend</text>
+  <text x="804" y="761" class="n">Node 2</text>
+  <path class="dns" d="M200,618 L200,684" marker-end="url(#arwD)"/>
+  <path class="dns" d="M300,618 Q360,651 385,684" marker-end="url(#arwD)"/>
+  <path class="dns" d="M690,618 L690,684" marker-end="url(#arwD)"/>
+  <path class="dns" d="M780,618 Q840,651 865,684" marker-end="url(#arwD)"/>
+
+  <!-- data services + coredns -->
+  <text x="600" y="811" class="n" fill="#16a34a">⑥ backend calls DBs BY NAME</text>
+  <rect x="120" y="816" width="190" height="72" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="134" y="838" class="bt" font-size="13">CoreDNS</text>
+  <text x="134" y="856" class="bs">⑦ name → ClusterIP</text>
+  <text x="134" y="873" class="n">(cluster-internal DNS)</text>
+  <rect x="360" y="816" width="230" height="72" rx="10" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="374" y="838" class="bt">mongo-service</text>
+  <text x="374" y="856" class="bs">ClusterIP · <tspan class="port">port 27017</tspan></text>
+  <text x="374" y="873" class="n">selector: app=mongo</text>
+  <rect x="640" y="816" width="230" height="72" rx="10" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="654" y="838" class="bt">redis-service</text>
+  <text x="654" y="856" class="bs">ClusterIP · <tspan class="port">port 6379</tspan></text>
+  <text x="654" y="873" class="n">selector: app=redis</text>
+  <path class="flowG" d="M660,768 Q560,791 500,812" marker-end="url(#arwG)"/>
+  <path class="flowG" d="M700,768 Q740,791 755,812" marker-end="url(#arwG)"/>
+  <path class="dns" d="M310,852 L356,852" marker-end="url(#arwD)"/>
+
+  <!-- db pods -->
+  <rect x="360" y="928" width="230" height="76" rx="10" fill="#fde68a" stroke="#f59e0b" stroke-width="2"/>
+  <text x="374" y="950" class="bt">mongo pod</text>
+  <text x="374" y="968" class="port">:27017</text>
+  <text x="374" y="986" class="n">app=mongo · Node 1</text>
+  <rect x="640" y="928" width="230" height="76" rx="10" fill="#fecaca" stroke="#ef4444" stroke-width="2"/>
+  <text x="654" y="950" class="bt">redis pod</text>
+  <text x="654" y="968" class="port">:6379</text>
+  <text x="654" y="986" class="n">app=redis · Node 2</text>
+  <path class="flow" d="M475,888 L475,924" marker-end="url(#arw)"/>
+  <text x="482" y="908" class="n">⑧ kube-proxy → pod</text>
+  <path class="flow" d="M755,888 L755,924" marker-end="url(#arw)"/>
+
+  <!-- storage -->
+  <rect x="360" y="1036" width="350" height="66" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="374" y="1058" class="bt" font-size="13">⑨ mongo-pvc → mongo-pv  (EBS volume)</text>
+  <text x="374" y="1077" class="bs">durable data — survives pod restarts</text>
+  <text x="374" y="1094" class="n">on EKS needs the EBS CSI driver to bind</text>
+  <path class="flow" d="M475,1004 L475,1032" marker-end="url(#arw)"/>
+
+  <!-- return -->
+  <rect x="120" y="1126" width="960" height="58" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="134" y="1150" class="bt" font-size="13">↩︎ Response path (reverse):</text>
+  <text x="134" y="1171" class="bs">db pod → backend pod → NGINX controller → NLB → browser. React renders the feed. Same hops, backwards.</text>
+
+  <!-- callout: where routing lives -->
+  <rect x="120" y="1200" width="960" height="72" rx="10" fill="#f0fdfa" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="134" y="1223" class="bt" font-size="13">🔑 The difference from Approach 1 (ALB)</text>
+  <text x="134" y="1243" class="bs">Here the <tspan font-weight="700">path routing happens in NGINX PODS (inside the cluster)</tspan>; the NLB is a dumb L4 pipe.</text>
+  <text x="134" y="1261" class="n">In Approach 1 the routing happened in the ALB (in AWS). Same Ingress YAML — the difference is WHICH controller you installed.</text>
+
+  <!-- callout: two LB layers -->
+  <rect x="120" y="1288" width="960" height="72" rx="10" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="134" y="1311" class="bt" font-size="13">⚖️ Load-balancing layers here</text>
+  <text x="134" y="1331" class="bs"><tspan font-weight="700">NLB</tspan> → spreads across nodes to reach NGINX pods · <tspan font-weight="700">NGINX</tspan> → picks the service by path · <tspan font-weight="700">kube-proxy</tspan> → picks the pod.</text>
+  <text x="134" y="1349" class="n">Control plane never in this path — it only set up routing rules ahead of time. Backend stays ClusterIP-only (never public).</text>
+
+  <!-- LEGEND COLUMN -->
+  <rect x="1220" y="84" width="496" height="404" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1240" y="112" class="lh">🧭 Request flow — step by step</text>
+  <text x="1240" y="140" class="lt">① Browser runs <tspan fill="#7c3aed">axios.get('/api/posts')</tspan> — RELATIVE,</text>
+  <text x="1258" y="158" class="lt">so it hits the same origin it loaded from.</text>
+  <text x="1240" y="182" class="lt">② DNS → NLB address. Browser opens HTTPS 443</text>
+  <text x="1258" y="200" class="lt">to the NLB (a dumb Layer-4 TCP pipe).</text>
+  <text x="1240" y="224" class="lt">③ NLB forwards the TCP straight to the NGINX</text>
+  <text x="1258" y="242" class="lt">Ingress Controller pods — no path logic in the NLB.</text>
+  <text x="1240" y="266" class="lt">④ NGINX terminates TLS, reads the Ingress rules,</text>
+  <text x="1258" y="284" class="lt">and PATH-routes: /api → backend-service (/ → front).</text>
+  <text x="1240" y="308" class="lt">⑤ kube-proxy picks a healthy backend pod (by label</text>
+  <text x="1258" y="326" class="lt">via Endpoints) → pod:8080.</text>
+  <text x="1240" y="350" class="lt">⑥ Backend calls mongo-service / redis-service BY</text>
+  <text x="1258" y="368" class="lt">NAME (mongo port 27017 implied by mongodb://).</text>
+  <text x="1240" y="392" class="lt">⑦ CoreDNS resolves name → ClusterIP.</text>
+  <text x="1240" y="416" class="lt">⑧ kube-proxy → mongo/redis pod (:27017 / :6379).</text>
+  <text x="1240" y="440" class="lt">⑨ Mongo persists to PVC→PV (EBS). Response</text>
+  <text x="1258" y="458" class="lt">flows back up to the browser.</text>
+
+  <rect x="1220" y="504" width="496" height="322" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1240" y="532" class="lh">🔌 Ports cheat-sheet</text>
+  <text x="1240" y="560" class="lt"><tspan font-weight="700">containerPort</tspan> = where the APP listens in the pod.</text>
+  <text x="1240" y="584" class="lt"><tspan font-weight="700">targetPort</tspan> = pod port the Service forwards TO</text>
+  <text x="1258" y="602" class="lt">(= containerPort).</text>
+  <text x="1240" y="626" class="lt"><tspan font-weight="700">port</tspan> = the Service's own door you dial</text>
+  <text x="1258" y="644" class="lt">(<tspan fill="#7c3aed">backend-service:8080</tspan>).</text>
+  <text x="1240" y="668" class="lt"><tspan font-weight="700">nodePort</tspan> = a port on every node's IP (external).</text>
+  <text x="1258" y="686" class="lt">Not used here — NGINX/NLB front the cluster.</text>
+  <text x="1240" y="714" class="lt" font-weight="700">App ports:</text>
+  <text x="1240" y="736" class="lt">frontend 5173 · backend 8080 · mongo 27017 · redis 6379</text>
+  <text x="1240" y="760" class="lt" fill="#7c3aed">Write a port only when it's NOT the scheme default:</text>
+  <text x="1240" y="778" class="lt" fill="#7c3aed">8080 ≠ http's 80 → written · 27017 = mongo's → omitted.</text>
+  <text x="1240" y="806" class="lt">Service types are cumulative: NodePort still has a</text>
+  <text x="1258" y="824" class="lt">ClusterIP; LoadBalancer has all three.</text>
+
+  <rect x="1220" y="842" width="496" height="518" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1240" y="870" class="lh">🧠 Key concepts (interview-ready)</text>
+  <text x="1240" y="898" class="lt">• <tspan font-weight="700">Ingress</tspan> = routing RULES (text). Inert alone.</text>
+  <text x="1240" y="922" class="lt">• <tspan font-weight="700">Ingress Controller</tspan> = the engine that reads them.</text>
+  <text x="1258" y="940" class="lt">NGINX → routes in cluster pods (this diagram).</text>
+  <text x="1258" y="958" class="lt">AWS LB Controller → routes in an ALB (Approach 1).</text>
+  <text x="1240" y="982" class="lt">• <tspan font-weight="700">Service type=LoadBalancer</tspan> = a dumb NLB, one</text>
+  <text x="1258" y="1000" class="lt">per service, NO path routing. Installing NGINX uses</text>
+  <text x="1258" y="1018" class="lt">exactly this to auto-create the front NLB.</text>
+  <text x="1240" y="1042" class="lt">• <tspan font-weight="700">ClusterIP is virtual</tspan>; kube-proxy rewrites</text>
+  <text x="1258" y="1060" class="lt">(ClusterIP:port)→(pod IP:targetPort).</text>
+  <text x="1240" y="1084" class="lt">• <tspan font-weight="700">DNS gives NAME→IP only</tspan>; ports come from</text>
+  <text x="1258" y="1102" class="lt">the URL/scheme, never from DNS.</text>
+  <text x="1240" y="1126" class="lt">• <tspan font-weight="700">Labels are the glue</tspan>: Deployment stamps</text>
+  <text x="1258" y="1144" class="lt">app=backend; Service selector finds those pods.</text>
+  <text x="1240" y="1168" class="lt">• <tspan font-weight="700">Control plane ≠ data path</tspan> — never in live traffic.</text>
+  <text x="1240" y="1192" class="lt">• <tspan font-weight="700">CoreDNS</tspan> = 2 central pods; <tspan font-weight="700">VPC CNI + kube-proxy</tspan></text>
+  <text x="1258" y="1210" class="lt">= DaemonSets (one per node). All auto-installed.</text>
+  <text x="1240" y="1234" class="lt">• <tspan font-weight="700">Dublin tip</tspan>: NGINX = portable/most common;</text>
+  <text x="1258" y="1252" class="lt">ALB = AWS-native. Know both from one Ingress YAML.</text>
+  <text x="1240" y="1276" class="lt">• <tspan font-weight="700">Backend ClusterIP-only</tspan> + relative /api = no</text>
+  <text x="1258" y="1294" class="lt">CORS, no public backend, no node IPs anywhere.</text>
+  <text x="1240" y="1318" class="lt">• <tspan font-weight="700">Same request, two doors</tspan>: internal name→ClusterIP</text>
+  <text x="1258" y="1336" class="lt">(via DNS); external via the Ingress/LB. Both end at pod.</text>
+
+  <text x="34" y="1426" class="n">Approach 2 of 2 · NGINX Ingress (path routing in-cluster) · pair with Approach 1 (AWS ALB) · Wanderlust MERN on EKS</text>
+</svg>
